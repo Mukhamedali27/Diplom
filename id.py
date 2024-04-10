@@ -7,3 +7,48 @@
 ['100019131522:-28396,62', 
  '100017975432:690', '100019645714:-20433,02', '100019475027:-9222,89', 
  '100019280154:-30861,65', '100018681662:-18568,08', '100019651828:-14546,19']
+
+
+
+
+
+
+
+
+
+import pandas as pd
+
+# Чтение данных из первого листа
+df1 = pd.read_excel('имя_файла.xlsx', sheet_name='Лист1')
+
+# Чтение данных из второго листа
+data_list = ['100019131522:-28396,62', 
+             '100017975432:690', 
+             '100019645714:-20433,02', 
+             '100019475027:-9222,89', 
+             '100019280154:-30861,65', 
+             '100018681662:-18568,08', 
+             '100019651828:-14546,19']
+
+# Преобразование списка строк в DataFrame
+data_tuples = [tuple(item.split(':')) for item in data_list]
+df2 = pd.DataFrame(data_tuples, columns=['POLICY_ID', 'Начисл.доход'])
+
+# Приведение типа данных в df2 к тому же, что и в df1
+df2['POLICY_ID'] = df2['POLICY_ID'].astype(int)
+
+# Сравнение сумм по идентификаторам
+diff_df = pd.merge(df1, df2, on='POLICY_ID', suffixes=('_1', '_2'))
+diff_df['Начисл.доход_1'] = diff_df['Начисл.доход_1'].astype(float)
+diff_df['Начисл.доход_2'] = diff_df['Начисл.доход_2'].str.replace(',', '.').astype(float)
+diff_df['Разница'] = diff_df['Начисл.доход_1'] - diff_df['Начисл.доход_2']
+
+# Разделение данных на два DataFrame по условию различия сумм
+df_diff_1 = diff_df[diff_df['Разница'] != 0][['POLICY_ID', 'Начисл.доход_1']]
+df_diff_2 = diff_df[diff_df['Разница'] != 0][['POLICY_ID', 'Начисл.доход_2']]
+
+# Запись данных на новые листы
+with pd.ExcelWriter('output.xlsx') as writer:
+    df_diff_1.to_excel(writer, sheet_name='Несоответствие_1', index=False)
+    df_diff_2.to_excel(writer, sheet_name='Несоответствие_2', index=False)
+
