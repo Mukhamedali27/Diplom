@@ -43,13 +43,12 @@ for item in data2:
     id_ = int(id_)
     
     if id_ in sum_by_id:
-        if sum_by_id[id_] != amount:
+        if abs(sum_by_id[id_] - amount) > 0.01:  # Проверка на разницу в 0.01 (из-за погрешности при работе с float)
             result.append(f'{id_}:{sum_by_id[id_]}')
     else:
         result.append(f'{id_}: not found')
 
 print(result)
-
 
 
 
