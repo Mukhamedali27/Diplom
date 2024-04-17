@@ -25,3 +25,7 @@ lines = lines[:-1]
 formatted_list = [list(map(lambda x: x.strip(), line.split())) for line in lines]
 
 print(formatted_list)
+
+
+
+AttributeError: 'list' object has no attribute 'strip'
