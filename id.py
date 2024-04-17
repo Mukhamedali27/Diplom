@@ -29,3 +29,24 @@ print(formatted_list)
 
 
 AttributeError: 'list' object has no attribute 'strip'
+
+
+
+
+
+
+my_list = [
+    "0      100010554798    -682300.71",
+    "1      100010554798     682301.11",
+    "2      100010628565     -74923.23",
+    "3      100010900925    -516760.41"
+]
+
+# Преобразуем каждую строку в список значений
+formatted_list = []
+for item in my_list:
+    parts = item.split()
+    parts = [int(parts[0])] + [float(part) for part in parts[1:]]
+    formatted_list.append(parts)
+
+print(formatted_list)
