@@ -59,11 +59,10 @@ print(formatted_list)
 
 import pandas as pd
 
-# Assuming your Excel file is named 'data.xlsx' and the sheet name is 'Sheet1'
-df = pd.read_excel('data.xlsx')
+# Read the Excel file, assuming it contains columns P and Z
+df = pd.read_excel('your_excel_file.xlsx')
 
-# Converting DataFrame to dictionary
-my_dict = df.set_index('POLICY_ID').to_dict()['Начисл.доход']
+# Extract values from columns P and Z and create a list of tuples
+data_list = [(row['P'], row['Z']) for index, row in df.iterrows()]
 
-print(my_dict)
-
+print(data_list)
