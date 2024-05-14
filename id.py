@@ -50,3 +50,20 @@ for item in my_list:
     formatted_list.append(parts)
 
 print(formatted_list)
+
+
+
+
+
+
+
+import pandas as pd
+
+# Assuming your Excel file is named 'data.xlsx' and the sheet name is 'Sheet1'
+df = pd.read_excel('data.xlsx')
+
+# Converting DataFrame to dictionary
+my_dict = df.set_index('POLICY_ID').to_dict()['Начисл.доход']
+
+print(my_dict)
+
