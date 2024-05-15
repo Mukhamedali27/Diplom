@@ -59,10 +59,22 @@ print(formatted_list)
 
 import pandas as pd
 
-# Read the Excel file, assuming it contains columns P and Z
-df = pd.read_excel('your_excel_file.xlsx')
+# Список листов, которые нужно прочитать
+sheets = ['01032024 381', '1', '2']  # Замените на фактические имена листов
 
-# Extract values from columns P and Z and create a list of tuples
-data_list = [(row['P'], row['Z']) for index, row in df.iterrows()]
+# Загрузка данных из всех листов и объединение их в один DataFrame
+dfs = []
+for sheet in sheets:
+    df = pd.read_excel('C:\\Users\\zhumabek.m\\Desktop\\awd\\febral.xlsx', sheet_name=sheet, usecols=['POLICY_ID','Начисл.доход'])
+    dfs.append(df)
 
-print(data_list)
+# Объединение DataFrame'ов из разных листов
+combined_df = pd.concat(dfs, ignore_index=True)
+
+# Создание словаря
+my_dict = {}
+for index, row in combined_df.iterrows():
+    my_dict[row['POLICY_ID']] = row['Начисл.доход']
+
+# Вывод словаря
+print(my_dict)
