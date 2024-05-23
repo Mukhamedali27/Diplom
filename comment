@@ -7,3 +7,12 @@ df_2_csv = pd.read_csv('C:\\Users\\zhumabek.m\\Desktop\\awd\\1С-01.csv', engine
 
 raise ValueError(
 ValueError: Unknown engine: openpyxl (valid options are dict_keys(['c', 'python', 'pyarrow', 'python-fwf']))
+
+
+
+File "parsers.pyx", line 838, in pandas._libs.parsers.TextReader.read_low_memory
+  File "parsers.pyx", line 905, in pandas._libs.parsers.TextReader._read_rows
+  File "parsers.pyx", line 874, in pandas._libs.parsers.TextReader._tokenize_rows
+  File "parsers.pyx", line 891, in pandas._libs.parsers.TextReader._check_tokenize_status
+  File "parsers.pyx", line 2061, in pandas._libs.parsers.raise_parser_error
+pandas.errors.ParserError: Error tokenizing data. C error: Expected 3 fields in line 30, saw 5
