@@ -1,0 +1,2 @@
+from pyxlsx import open_workbook
+ImportError: cannot import name 'open_workbook' from 'pyxlsx' (C:\Users\zhumabek.m\AppData\Local\Programs\Python\Python310\lib\site-packages\pyxlsx\__init__.py)
