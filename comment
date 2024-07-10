@@ -1,3 +1,67 @@
 Получить письмо от «ensemble@halykbank.kz» с темой «Сверочный реестр по платежам» в outlook
 который содржит экзел файл и там в одном из ячейк находится общая сумма, там написано например A241(общая сумма) а B241 который рядом (15000), мне
 нужно вот этот 15000 скопировать общая сумма может находиться в любом месте надо по ячейке найти и который рядом стоит сумма который нам надо скоприровать.
+
+
+
+import win32com.client
+import os
+from openpyxl import load_workbook
+
+# Путь к папке для сохранения вложений
+save_folder = os.path.expanduser("~/Downloads")
+
+# Функция для получения и сохранения вложений из писем Outlook
+def save_outlook_attachments(subject, sender_email, save_folder):
+    outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
+    inbox = outlook.GetDefaultFolder(6)  # 6 corresponds to the inbox folder
+
+    messages = inbox.Items
+    messages.Sort("[ReceivedTime]", True)  # Sort by received time, descending order
+
+    for message in messages:
+        if message.Subject == subject and message.SenderEmailAddress == sender_email:
+            attachments = message.Attachments
+            for attachment in attachments:
+                attachment.SaveAsFile(os.path.join(save_folder, attachment.FileName))
+            return True  # Return True if found and saved attachments
+
+    return False  # Return False if no matching email found
+
+# Функция для поиска и копирования значения из Excel файла
+def find_and_copy_excel_value(file_path):
+    wb = load_workbook(filename=file_path)
+    ws = wb.active
+
+    # Поиск по ячейкам
+    for row in ws.iter_rows():
+        for cell in row:
+            if cell.value == "A241(общая сумма)":
+                adjacent_cell = ws.cell(row=cell.row, column=cell.column + 1)
+                if isinstance(adjacent_cell.value, (int, float)):
+                    return adjacent_cell.value
+
+    return None  # Return None if value not found
+
+# Основная программа
+if __name__ == "__main__":
+    subject = "Сверочный реестр по платежам"
+    sender_email = "ensemble@halykbank.kz"
+
+    # Сохраняем вложение из письма
+    if save_outlook_attachments(subject, sender_email, save_folder):
+        print("Attachment saved successfully.")
+
+        # Находим Excel файл в указанной папке и копируем значение
+        files = os.listdir(save_folder)
+        for file in files:
+            if file.endswith(".xlsx"):
+                file_path = os.path.join(save_folder, file)
+                value = find_and_copy_excel_value(file_path)
+                if value is not None:
+                    print(f"Found value: {value}")
+                    break
+                else:
+                    print("Value not found in Excel file.")
+    else:
+        print("No email with specified subject and sender found.")
