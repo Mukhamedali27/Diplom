@@ -1,0 +1,104 @@
+from applyScripts.goszakup2.main import apply_goszakup
+from applyScripts.goszakup2.service.headers import SendHeaders
+from browser.globalDriver import GlobalDriver
+from helpers.auth_goszakup import passAuth
+from helpers.waitElement import waitElement, waitElements
+from selenium.webdriver.common.by import By
+import pyautogui
+pyautogui.FAILSAFE = False
+import time
+from datetime import datetime
+
+from parseScripts.goszakup.parsing import goszakup_parsing
+from services.browser.openBrowser import close_all_tabs
+from services.telegram.alert import sendMessage, sendImage
+
+old_lots = []
+broken_lots = []
+
+def get_lot_url(row_id): return f"https://goszakup.gov.kz/ru/announce/index/{row_id}"
+def get_create_url(row_id): return f"https://v3bl.goszakup.gov.kz/ru/application/create/{row_id}"
+
+def start_apply(active_id):
+    print(f"START APPLY [{datetime.now()}]", active_id)
+    start_time = time.time()
+    error_text = None
+
+    try: error_text = apply_goszakup(active_id)
+    except: error_text = "Неизвестная ошибка"
+
+
+    if error_text is None:
+        old_lots.append(active_id)
+        sendMessage(message = f"Успешно отправил заявку [за {time.time() - start_time} секунд] {get_lot_url(active_id)}")
+    else:
+        broken_lots.append(active_id)
+        try:
+            screenshot = pyautogui.screenshot()
+            screenshot.save("./screenshot.png")
+            screenshot_file = open("./screenshot.png", "rb")
+            sendImage(image=screenshot_file)
+        except: pass
+        sendMessage(message=f"Ошибка в заявке {get_lot_url(active_id)} | '{error_text}'")
+    print(f"END APPLY [{datetime.now()}]", active_id)
+
+
+def refrech_auth():
+    driver = GlobalDriver()
+    print("Обновляю авторизацию")
+    driver.execute_script("window.open('https://v3bl.goszakup.gov.kz/ru/user/', '_blank');")
+    driver.switch_to.window(driver.window_handles[-1])
+    authorised, notAuthorised = waitElements(
+        getFunc1 = lambda : driver.find_element(By.XPATH, "//*[contains(text(), 'Успешная авторизация')]"),
+        getFunc2 = lambda : driver.find_element(By.ID, 'selectP12File')
+    )
+    if authorised is None:
+        try:passAuth(driver, return_first_tab=False)
+        except:pass
+
+    # Записываю куки для авторизации
+    cookies_line = "; ".join([f'{cookie["name"]}={cookie["value"]}' for cookie in driver.get_cookies()])
+    send_headers = SendHeaders()
+    send_headers.set_cookies(cookies_line)
+
+    driver.close()
+    driver.switch_to.window(driver.window_handles[0])
+
+def start_goszakup_parsing():
+    driver = GlobalDriver()
+    counter_auth = 10
+
+    while True:
+        counter_auth = counter_auth + 1
+
+        # Закрываю все вкладки
+        close_all_tabs(driver)
+
+        # Если ссылка сбилась
+        if not 'https://goszakup.gov.kz/ru/search/announce?' in driver.current_url :
+            driver.get('https://goszakup.gov.kz/ru/search/announce')
+
+
+            ## Проставляю ФИЛЬТРЫ
+            filter1 = waitElement(lambda: driver.find_element(By.XPATH, '//input[@id="in_amount_from"]'))
+            if filter1 is None: continue
+            filter1.send_keys("1942408")
+            filter2 = waitElement(lambda: driver.find_element(By.XPATH, '//input[@id="in_amount_to"]'))
+            filter2.send_keys("1942408")
+
+            find_button = waitElement(lambda: driver.find_element(By.XPATH, '//button[@type="submit"]'))
+            find_button.click()
+
+        # Обновляю авторизацию
+        if counter_auth > 10:
+            refrech_auth()
+            counter_auth = 0
+
+        active_ids = goszakup_parsing(disableLots=old_lots+broken_lots)
+        # Убираю старые лоты из активных
+        active_ids = [url for url in active_ids if url not in old_lots and url not in broken_lots]
+        print(active_ids)
+
+        if len(active_ids) > 0:
+            start_apply(active_ids[0])
+        time.sleep(4)
